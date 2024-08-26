@@ -1,0 +1,54 @@
+Sub CreateDashboard()
+    Dim wsMaster As Worksheet
+    Dim wsDashboard As Worksheet
+    Dim stations As Variant
+    Dim station As String
+    Dim i As Long
+    Dim lastRow As Long
+    Dim countRange As Range
+    Dim chartObj As ChartObject
+    
+    Set wsMaster = ThisWorkbook.Sheets("master")
+    
+    On Error Resume Next
+    Set wsDashboard = ThisWorkbook.Sheets("Dashboard")
+    On Error GoTo 0
+    If wsDashboard Is Nothing Then
+        Set wsDashboard = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count))
+        wsDashboard.Name = "Dashboard"
+    Else
+        wsDashboard.Cells.Clear
+    End If
+    
+    stations = Array("LBB", "FTM", "CPR", "HJN", "BLA", "BLM", "ASN", "SNY", "IST", "BNH", "STB", "DKA", "BHI")
+    
+    wsDashboard.Cells(1, 1).Value = "Station"
+    wsDashboard.Cells(1, 2).Value = "Done"
+    wsDashboard.Cells(1, 3).Value = "Open"
+
+    For i = LBound(stations) To UBound(stations)
+        station = stations(i)
+        wsDashboard.Cells(i + 2, 1).Value = station
+        wsDashboard.Cells(i + 2, 2).Formula = "=COUNTIFS(master!I:I, """ & station & """, master!P:P, ""done"")"
+        wsDashboard.Cells(i + 2, 3).Formula = "=COUNTIFS(master!I:I, """ & station & """, master!P:P, ""open"")"
+    Next i
+    
+    Set countRange = wsDashboard.Range("A1:C" & UBound(stations) + 2)
+    Set chartObj = wsDashboard.ChartObjects.Add(Left:=300, Width:=400, Top:=50, Height:=300)
+    With chartObj.Chart
+        .SetSourceData Source:=countRange
+        .ChartType = xlColumnClustered
+        .HasTitle = True
+        .ChartTitle.Text = "Jumlah Temuan per Stasiun"
+        .Axes(xlCategory, xlPrimary).HasTitle = True
+        .Axes(xlCategory, xlPrimary).AxisTitle.Text = "Stasiun"
+        .Axes(xlValue, xlPrimary).HasTitle = True
+        .Axes(xlValue, xlPrimary).AxisTitle.Text = "Jumlah Temuan"
+        
+        .SeriesCollection(1).Name = "Done"
+        .SeriesCollection(2).Name = "Open"
+    End With
+    
+    MsgBox "Dashboard berdasarkan temuan open/close sudah berhasil dibuat!", vbInformation
+End Sub
+

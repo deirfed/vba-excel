@@ -1,0 +1,95 @@
+Sub CreateWeekTrendChart()
+    Dim wsMaster As Worksheet
+    Dim wsDashboard As Worksheet
+    Dim lastRow As Long
+    Dim weekDict As Object
+    Dim weekArray As Variant
+    Dim i As Long
+    Dim week As String
+    Dim chartObj As ChartObject
+
+    ' Set worksheet master
+    Set wsMaster = ThisWorkbook.Sheets("master")
+
+    ' Add new worksheet for dashboard
+    On Error Resume Next
+    Set wsDashboard = ThisWorkbook.Sheets("Trend Chart ")
+    On Error GoTo 0
+    If wsDashboard Is Nothing Then
+        Set wsDashboard = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count))
+        wsDashboard.Name = "Trend Chart"
+    Else
+        wsDashboard.Cells.Clear
+    End If
+
+    ' Create dictionary to hold week data
+    Set weekDict = CreateObject("Scripting.Dictionary")
+
+    ' Get last row of data in master sheet
+    lastRow = wsMaster.Cells(wsMaster.Rows.Count, 1).End(xlUp).Row
+
+    ' Loop through master sheet data and count occurrences for each week
+    For i = 2 To lastRow
+        week = wsMaster.Cells(i, 3).Value ' Week column
+
+        If Not weekDict.exists(week) Then
+            weekDict(week) = 0
+        End If
+        weekDict(week) = weekDict(week) + 1
+    Next i
+
+    ' Convert dictionary keys to array and sort
+    weekArray = weekDict.keys
+    Call QuickSort(weekArray, LBound(weekArray), UBound(weekArray))
+
+  ' Add headers for the data
+    wsDashboard.Cells(1, 1).Value = "Week"
+    wsDashboard.Cells(1, 2).Value = "Count"
+
+    ' Populate dashboard sheet with data
+    For i = LBound(weekArray) To UBound(weekArray)
+        wsDashboard.Cells(i + 2, 1).Value = weekArray(i)
+        wsDashboard.Cells(i + 2, 2).Value = weekDict(weekArray(i))
+    Next i
+
+    ' Create trend chart
+    Set chartObj = wsDashboard.ChartObjects.Add(Left:=300, Width:=600, Top:=50, Height:=300)
+    With chartObj.Chart
+        .SetSourceData Source:=wsDashboard.Range("A1:B" & UBound(weekArray) + 2)
+        .ChartType = xlLineMarkers
+        .HasTitle = True
+        .ChartTitle.Text = "Trend Jumlah Data per Minggu"
+        .Axes(xlCategory, xlPrimary).HasTitle = True
+        .Axes(xlCategory, xlPrimary).AxisTitle.Text = "2024"
+        .Axes(xlValue, xlPrimary).HasTitle = True
+        .Axes(xlValue, xlPrimary).AxisTitle.Text = "Jumlah Data"
+    End With
+
+    MsgBox "Trend chart has been created in the Dashboard sheet.", vbInformation
+End Sub
+
+' QuickSort function to sort the weekArray
+Sub QuickSort(arr As Variant, first As Long, last As Long)
+    Dim low As Long, high As Long, mid As Variant, temp As Variant
+    low = first
+    high = last
+    mid = arr((first + last) \ 2)
+    Do While low <= high
+        Do While arr(low) < mid
+            low = low + 1
+        Loop
+        Do While arr(high) > mid
+            high = high - 1
+        Loop
+        If low <= high Then
+            temp = arr(low)
+            arr(low) = arr(high)
+            arr(high) = temp
+            low = low + 1
+            high = high - 1
+        End If
+    Loop
+    If first < high Then QuickSort arr, first, high
+    If low < last Then QuickSort arr, low, last
+End Sub
+
