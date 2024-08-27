@@ -65,7 +65,7 @@ Sub CreateWeekTrendChart()
         .Axes(xlValue, xlPrimary).AxisTitle.Text = "Jumlah Data"
     End With
 
-    MsgBox "Trend chart has been created in the Dashboard sheet.", vbInformation
+    MsgBox "Trend Chart berhasil dibuat!", vbInformation
 End Sub
 
 ' QuickSort function to sort the weekArray

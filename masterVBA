@@ -1,0 +1,38 @@
+Private Sub Worksheet_Change(ByVal Target As Range)
+    Dim wsMaster As Worksheet
+    Dim wsNew As Worksheet
+    Dim lastRow As Long
+    Dim station As String
+    Dim stations As Variant
+    Dim i As Long
+    Dim cell As Range
+    Dim rng As Range
+    
+    Set wsMaster = Me
+    
+    stations = Array("LBB", "FTM", "CPR", "HJN", "BLA", "BLM", "ASN", "SNY", "IST", "BNH", "STB", "DKA", "BHI")
+    
+    If Not Target Is Nothing Then
+        For i = LBound(stations) To UBound(stations)
+            station = stations(i)
+            
+            On Error Resume Next
+            Set wsNew = ThisWorkbook.Sheets(station)
+            On Error GoTo 0
+            If wsNew Is Nothing Then
+                Set wsNew = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count))
+                wsNew.Name = station
+            End If
+            
+            wsNew.Cells.Clear
+            
+            With wsMaster
+                .Range("A1").AutoFilter Field:=9, Criteria1:=station
+                .Range("A1").CurrentRegion.Copy Destination:=wsNew.Cells(1, 1)
+                .AutoFilterMode = False
+            End With
+            
+            Set wsNew = Nothing
+        Next i
+    End If
+End Sub
